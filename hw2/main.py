@@ -8,7 +8,7 @@ import io
 
 #復古CV效果風格轉換
 
-def retor_cv_effect(img):
+def retor_cv_effect(img:np.ndarray) -> np.ndarray:
     #轉換成灰階
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -47,25 +47,57 @@ def retor_cv_effect(img):
     return res
 
 #水彩畫風格轉換
-def watercolor(img):
+def watercolor(img: np.ndarray) -> np.ndarray:
     res = img.copy()
 
     #雙邊濾波
     for i in range(3):
-        res = cv2.bilateralFilter(res, 9, 75, 75)
+        res = cv2.bilateralFilter(res, 9, 200, 200)
 
     #邊緣檢測
+    gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
+    edges = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 9, 2)
+    edges = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
+    res = cv2.bitwise_and(res, edges)
+
+    return res
+
+# 定義油畫效果函數
+def oil_paint(img: np.ndarray, radius: int, levels: int) -> np.ndarray:
+    res = cv2.xphoto.oilPainting(img, radius, levels)
+    return res
+
+# 定義素描效果函數
+def sketch_effect(img: np.ndarray) -> np.ndarray:
+    # 轉換成灰階
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    inverted_gray = 255 - gray
+
+    blurred = cv2.GaussianBlur(inverted_gray, (51 , 51), 0)
+    sketch = cv2.divide(gray, 255 - blurred, scale=256)
+
+    #轉換色彩
+    res = cv2.cvtColor(sketch, cv2.COLOR_GRAY2BGR)
+
+    return res
 
 
 
 img = None
 img = cv2.imread("1.jpg")
+# print(type(img))
 
 if img is None:
     print("Image is not loaded")
 
 retro = retor_cv_effect(img)
+watercolor_img = watercolor(img)
+oil_paint_img = oil_paint(img, 10, 1)
+sketch_img = sketch_effect(img)
 
-#用pillow顯示圖片
 cv2.imwrite("retro.jpg", retro)
+cv2.imwrite("watercolor.jpg", watercolor_img)
+cv2.imwrite("oil_paint.jpg", oil_paint_img)
+cv2.imwrite("sketch.jpg", sketch_img)
