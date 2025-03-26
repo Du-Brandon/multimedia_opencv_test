@@ -13,11 +13,11 @@ from PIL import Image as PILImage #匯入PIL的Image模組,用於影像處理
 
 
 class SmileFilterApp:
-    def __init__(self):
+    def _init_(self):
 
         # 初始化 MediaPipe Face Mesh 用於臉部特徵點檢測
-        self.mp_face_mesh = mp.solutions.face_mesh
-        self.face_mesh = self.mp_face_mesh.FaceMesh(
+        self.mp_face_mesh = mp.solutions. face_mesh
+        self.face_mesh = self.mp_face_mesh. FaceMesh(
         max_num_faces=1, # 只檢測一張臉
         min_detection_confidence=0.5,#檢測信心閾值
         min_tracking_confidence=0.5)#追蹤信心閾值
@@ -37,10 +37,10 @@ class SmileFilterApp:
 
         #定義嗣鍵臉部特徵點索引
         #MediaPipe FaceMesh提供468個面部標記點,以下是嘴巴相關的重要標記點
-        self.LEFT_MOUTH_CORNER = 61
-        self.RIGHT_MOUTH_CORNER = 291
-        self.TOP_LIP = 13
-        self.BOTTOM_LIP = 14
+        # 左嘴角的特徵點索引
+        self.RIGHT_MOUTH_CORNER = 291 #右嘴角的特徵點索引
+        # 上唇中間的特徵點索引
+        # 下唇中間的特徵點索引
 
     def detect_smile(self, face_landmarks):
         # 計算嘴巴的寬度和高度
@@ -81,15 +81,23 @@ class SmileFilterApp:
         return is_smiling, smile_intensity
 
 
-def main():
-    # 初始化 SmileFilterApp 物件
-    smile_filter_app = SmileFilterApp()
 
+def capture_and_display():
     # 初始化攝影機
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Cannot open camera")
         exit()
+
+    # 初始化 MediaPipe Face Mesh
+    mp_face_mesh = mp.solutions.face_mesh
+    face_mesh = mp_face_mesh.FaceMesh(
+        max_num_faces=1,  # 只檢測一張臉
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5
+    )
+    mp_drawing = mp.solutions.drawing_utils
+    drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
 
     while True:
         # 擷取影像
@@ -102,33 +110,21 @@ def main():
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         # 將影像傳遞給 MediaPipe 進行處理
-        results = smile_filter_app.face_mesh.process(rgb_frame)
+        results = face_mesh.process(rgb_frame)
 
-        # 如果檢測到臉部，進行微笑檢測並繪製特徵點
+        # 如果檢測到臉部，繪製特徵點
         if results.multi_face_landmarks:
             for face_landmarks in results.multi_face_landmarks:
-                # 繪製臉部特徵點
-                smile_filter_app.mp_drawing.draw_landmarks(
+                mp_drawing.draw_landmarks(
                     image=frame,
                     landmark_list=face_landmarks,
-                    connections=smile_filter_app.mp_face_mesh.FACEMESH_TESSELATION,
-                    landmark_drawing_spec=smile_filter_app.drawing_spec,
-                    connection_drawing_spec=smile_filter_app.drawing_spec
+                    connections=mp_face_mesh.FACEMESH_TESSELATION,
+                    landmark_drawing_spec=drawing_spec,
+                    connection_drawing_spec=drawing_spec
                 )
 
-                # 執行微笑檢測
-                is_smiling, smile_intensity = smile_filter_app.detect_smile(face_landmarks)
-
-                # 在影像上顯示微笑狀態
-                if is_smiling:
-                    cv2.putText(frame, f"Smiling! Intensity: {smile_intensity:.2f}",
-                                (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                else:
-                    cv2.putText(frame, "Not Smiling",
-                                (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-
         # 顯示處理後的影像
-        cv2.imshow('Smile Detection', frame)
+        cv2.imshow('live', frame)
 
         # 按下 q 鍵離開迴圈
         if cv2.waitKey(1) == ord('q'):
@@ -138,6 +134,4 @@ def main():
     cap.release()
     cv2.destroyAllWindows()
 
-
-if __name__ == "__main__":
-    main()
+capture_and_display()
