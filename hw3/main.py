@@ -7,8 +7,8 @@ import time #匯入time模組,用於時間控制和延遲
 # from google.colab.patches import cv2_imshow #用於在Colab環境中顯示OpenCV影像
 # from IPython.display import display, Javascript, Image, HTML, clear_output #用於在Jupyter Notebook或Colab中顯示內容
 # from google.colab.output import eval_js #用於在Colab中執行JavaScript程式碼 
-from base64 import b64decode,b64encode #用於Base64編碼和解碼,處理影像資料傳輸 
 import io # 用於處理二進位I/0
+from base64 import b64decode,b64encode #用於Base64編碼和解碼,處理影像資料傳輸 
 from PIL import Image as PILImage #匯入PIL的Image模組,用於影像處理
 
 
@@ -42,7 +42,8 @@ class SmileFilterApp:
         self.TOP_LIP = 13
         self.BOTTOM_LIP = 14
 
-    def detect_smile(self, face_landmarks):
+    # 檢測微笑的函數，回傳boolean值和微笑強度
+    def detect_smile(self, face_landmarks) :
         # 計算嘴巴的寬度和高度
         left_mouth = face_landmarks. landmark[self.LEFT_MOUTH_CORNER]
         right_mouth = face_landmarks. landmark[self.RIGHT_MOUTH_CORNER]
@@ -66,19 +67,48 @@ class SmileFilterApp:
         mouth_curve=(left_mouth.y+right_mouth.y)/2-middle_lip_y #嘴角與中間點的垂直差距
 
         # 修改判斷標準 - 更厳格的條件
-        smile_threshold_ratio = 4.0
-        smile_corner_threshold = 0.03
+        smile_threshold_ratio = 2.5
+        smile_corner_threshold = 0.05
 
         # 要求嘴巴寬高比大於閾值、嘴角位置較高,以及嘴角確實上揚
-        is_smiling = (mouth_ratio > smile_threshold_ratio and
-        corner_avg < smile_corner_threshold and
-        mouth_curve <- 0.01) #確保嘴巴呈微笑弧度
+        is_smiling = (mouth_ratio > smile_threshold_ratio and corner_avg < smile_corner_threshold and mouth_curve <- 0.01) #確保嘴巴呈微笑弧度
 
         # 計算微笑強度 - 用於調整濾鏡效果的強度
         # 將寬高比映射到0到1.5的強度值範圍
         smile_intensity =min((mouth_ratio- 3.5)/(smile_threshold_ratio- 3.5),1.5)#限制最大值
 
         return is_smiling, smile_intensity
+    
+    # 濾鏡效果函數
+    def black_and_white_filter(self, image):
+        # 將影像轉換為灰階
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # 將灰階影像轉換為三通道
+        gray_image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)
+        return gray_image
+    
+    # 彩色濾鏡效果函數
+    def color_filter(self, image):
+        # 增強影像的色彩對比
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        hsv_image[:, :, 1] = cv2.add(hsv_image[:, :, 1], 50)  # 增加飽和度
+        hsv_image[:, :, 2] = cv2.add(hsv_image[:, :, 2], 50)  # 增加亮度
+        color_image = cv2.cvtColor(hsv_image, cv2.COLOR_HSV2BGR)
+        return color_image
+
+    # 素描濾鏡效果函數
+    def sketch_filter(self, image):
+        # 將影像轉換為灰階
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # 反轉灰階影像
+        inverted_image = cv2.bitwise_not(gray_image)
+        # 使用高斯模糊
+        blurred_image = cv2.GaussianBlur(inverted_image, (21, 21), sigmaX=0, sigmaY=0)
+        # 將灰階影像與模糊影像結合，產生素描效果
+        sketch_image = cv2.divide(gray_image, 255 - blurred_image, scale=256)
+        # 將單通道影像轉換為三通道
+        sketch_image = cv2.cvtColor(sketch_image, cv2.COLOR_GRAY2BGR)
+        return sketch_image
 
 
 def main():
@@ -119,8 +149,9 @@ def main():
                 # 執行微笑檢測
                 is_smiling, smile_intensity = smile_filter_app.detect_smile(face_landmarks)
 
-                # 在影像上顯示微笑狀態
+                # 如果檢測到微笑，應用灰階濾鏡
                 if is_smiling:
+                    frame = smile_filter_app.sketch_filter(frame)
                     cv2.putText(frame, f"Smiling! Intensity: {smile_intensity:.2f}",
                                 (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 else:
@@ -137,6 +168,7 @@ def main():
     # 釋放攝影機裝置
     cap.release()
     cv2.destroyAllWindows()
+
 
 
 if __name__ == "__main__":
