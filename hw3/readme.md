@@ -4,6 +4,8 @@
 pip install opencv-python
 pip install mediapipe
 ```
+- **若無法安裝則請確認python版本是否為3.9~3.12之間**
+
 ## 執行check_version確認版本
 ```
 OpenCV version:  4.11.0
