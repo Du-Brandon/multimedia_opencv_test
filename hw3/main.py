@@ -121,6 +121,9 @@ def main():
         print("Cannot open camera")
         exit()
 
+    # 初始化濾鏡模式變數
+    filter_mode = 'none'  # 預設無濾鏡
+
     while True:
         # 擷取影像
         ret, frame = cap.read()
@@ -149,26 +152,42 @@ def main():
                 # 執行微笑檢測
                 is_smiling, smile_intensity = smile_filter_app.detect_smile(face_landmarks)
 
-                # 如果檢測到微笑，應用灰階濾鏡
+                # 如果檢測到微笑，顯示微笑狀態
                 if is_smiling:
-                    frame = smile_filter_app.sketch_filter(frame)
+                            # 根據當前濾鏡模式應用濾鏡
+                    if filter_mode == 'b':  # 灰階濾鏡
+                        frame = smile_filter_app.black_and_white_filter(frame)
+                    elif filter_mode == 'c':  # 彩色濾鏡
+                        frame = smile_filter_app.color_filter(frame)
+                    elif filter_mode == 's':  # 素描濾鏡
+                        frame = smile_filter_app.sketch_filter(frame)
                     cv2.putText(frame, f"Smiling! Intensity: {smile_intensity:.2f}",
                                 (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 else:
                     cv2.putText(frame, "Not Smiling",
                                 (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
+
+
         # 顯示處理後的影像
         cv2.imshow('Smile Detection', frame)
 
-        # 按下 q 鍵離開迴圈
-        if cv2.waitKey(1) == ord('q'):
+        # 監聽按鍵輸入
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):  # 按下 q 鍵退出
             break
+        elif key == ord('b'):  # 按下 b 鍵切換到灰階濾鏡
+            filter_mode = 'b'
+        elif key == ord('c'):  # 按下 c 鍵切換到彩色濾鏡
+            filter_mode = 'c'
+        elif key == ord('s'):  # 按下 s 鍵切換到素描濾鏡
+            filter_mode = 's'
+        elif key == ord('n'):  # 按下 n 鍵取消濾鏡
+            filter_mode = 'none'
 
     # 釋放攝影機裝置
     cap.release()
     cv2.destroyAllWindows()
-
 
 
 if __name__ == "__main__":
