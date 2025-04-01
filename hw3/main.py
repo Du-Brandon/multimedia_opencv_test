@@ -68,7 +68,7 @@ class SmileFilterApp:
         middle_lip_y=(top_lip.y+bottom_lip.y)/2 #嘴唇中間點的垂直位置
         mouth_curve=(left_mouth.y+right_mouth.y)/2-middle_lip_y #嘴角與中間點的垂直差距
 
-        # 修改判斷標準 - 更厳格的條件
+        # 修改判斷標準 - 更嚴格的條件
         smile_threshold_ratio = 2.5
         smile_corner_threshold = 0.05
 
