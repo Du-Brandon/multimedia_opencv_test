@@ -11,6 +11,8 @@ import io # 用於處理二進位I/0
 from base64 import b64decode,b64encode #用於Base64編碼和解碼,處理影像資料傳輸 
 from PIL import Image as PILImage #匯入PIL的Image模組,用於影像處理
 
+import os
+
 
 class SmileFilterApp:
     def __init__(self):
@@ -121,6 +123,9 @@ def main():
         print("Cannot open camera")
         exit()
 
+    output_dir = "output"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     # 初始化濾鏡模式變數
     filter_mode = 'none'  # 預設無濾鏡
 
@@ -184,6 +189,13 @@ def main():
             filter_mode = 's'
         elif key == ord('n'):  # 按下 n 鍵取消濾鏡
             filter_mode = 'none'
+        elif key == ord('p'):  # 按下 p 鍵擷取螢幕
+            # 生成檔案名稱
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            filename = os.path.join(output_dir, f"screenshot_{timestamp}.png")
+            # 儲存影像
+            cv2.imwrite(filename, frame)
+            print(f"Screenshot saved: {filename}")
 
     # 釋放攝影機裝置
     cap.release()
