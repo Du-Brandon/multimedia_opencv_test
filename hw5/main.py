@@ -41,10 +41,12 @@ model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(10, activation='softmax')
 ])
 
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
+model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+# model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 model.summary()
 
-history = model.fit(train_images, train_labels, epochs=5, validation_split=0.1) #, batch_size=64
+history = model.fit(train_images, train_labels, epochs=3, validation_split=0.1) #, batch_size=64
 
 # 畫出訓練過程中的準確率和損失值
 plt.figure(figsize=(12, 4))
